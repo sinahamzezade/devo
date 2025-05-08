@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./data/insurance.sqlite"
+}
+
+model InsuranceFormTemplate {
+  id          Int       @id @default(autoincrement())
+  name        String
+  type        String
+  description String?
+  fields      InsuranceFormField[]
+  sections    InsuranceFormSection[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model InsuranceFormField {
+  id          Int       @id @default(autoincrement())
+  name        String
+  type        String
+  label       String
+  required    Boolean   @default(false)
+  placeholder String?
+  options     String?   // JSON string for options array
+  validation  String?   // JSON string for validation rules
+  conditions  String?   // JSON string for conditions
+  apiEndpoint String?   // For dynamic options from API
+  sectionId   Int?      // Optional to allow fields at root level
+  template    InsuranceFormTemplate @relation(fields: [templateId], references: [id])
+  templateId  Int
+  section     InsuranceFormSection? @relation(fields: [sectionId], references: [id])
+  nestedFields InsuranceFormField[] @relation("NestedFields")
+  parentField InsuranceFormField? @relation("NestedFields", fields: [parentFieldId], references: [id])
+  parentFieldId Int?
+  order       Int       @default(0) // For ordering fields within a section
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model InsuranceFormSection {
+  id          Int       @id @default(autoincrement())
+  name        String
+  order       Int
+  fields      InsuranceFormField[]
+  template    InsuranceFormTemplate @relation(fields: [templateId], references: [id])
+  templateId  Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model InsuranceSubmission {
+  id          Int       @id @default(autoincrement())
+  templateId  Int
+  data        String    // JSON string of form data
+  status      String    @default("pending")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
